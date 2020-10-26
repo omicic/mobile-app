@@ -1,6 +1,5 @@
 package com.developerblog.app.ui.model.response;
 
-import java.util.List;
 
 
 public class UserResp {

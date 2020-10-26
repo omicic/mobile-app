@@ -2,6 +2,7 @@ package com.developerblog.app.ui;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,9 +12,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.developerblog.app.exception.UserServiceException;
 import com.developerblog.app.services.UserService;
 import com.developerblog.app.shared.dto.UserDto;
 import com.developerblog.app.ui.model.request.UserDetailsRequestModel;
+import com.developerblog.app.ui.model.response.ErrorMessages;
 import com.developerblog.app.ui.model.response.UserResp;
 
 @RestController
@@ -34,9 +37,12 @@ public class UsersController {
 	}
 	
 	@PostMapping
-	public UserResp createUser(@RequestBody UserDetailsRequestModel userDetails) {
+	public UserResp createUser(@RequestBody UserDetailsRequestModel userDetails) throws Exception {
 		
 		//userDetail as RequestModel-->copy to userDto-->returnValue as UserRest
+		if(userDetails.getFirstName().isEmpty())			
+				throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+				//example of using handleOtherExceptions method in AppExceptionsHandler.clas: all other Exception:  throw new NullPointerException("the null pointer exception");
 		UserResp returnValue = new UserResp();
 		UserDto userDto = new UserDto();
 		
