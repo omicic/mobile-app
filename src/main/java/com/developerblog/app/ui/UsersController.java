@@ -1,5 +1,8 @@
 package com.developerblog.app.ui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.Errors;
@@ -10,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.developerblog.app.exception.UserServiceException;
@@ -78,6 +82,22 @@ public class UsersController {
 		UserDto deleteUser = userService.deleteUser(id);
 		returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
 		return returnValue;		
+	}
+	
+	@GetMapping()
+	public List<UserResp> getUsers(@RequestParam(value = "page", defaultValue = "0") int page,
+									@RequestParam(value= "limit", defaultValue = "1") int limit)
+	{		
+		List<UserResp> returnValue = new ArrayList<UserResp>();
+		List<UserDto> users = userService.getUsers(page,limit);
+		
+		for(UserDto userDto : users) {
+			UserResp userModel = new UserResp();
+			BeanUtils.copyProperties(userDto, userModel);
+			returnValue.add(userModel);
+		}
+		
+		return returnValue;
 	}
 
 }
