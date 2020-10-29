@@ -3,6 +3,7 @@ package com.developerblog.app.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.Errors;
@@ -51,12 +52,17 @@ public class UsersController {
 				throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
 				//example of using handleOtherExceptions method in AppExceptionsHandler.class : all other Exception:  throw new NullPointerException("the null pointer exception");
 		UserResp returnValue = new UserResp();
-		UserDto userDto = new UserDto();
+	
+		//UserDto userDto = new UserDto();		
+		//BeanUtils.copyProperties(userDetails, userDto);
+		//using ModelMapper instead
 		
-		BeanUtils.copyProperties(userDetails, userDto);
+		ModelMapper modelMapper = new ModelMapper();
+		UserDto userDto = modelMapper.map(userDetails, UserDto.class);
+		
 		UserDto createdUser = userService.createUser(userDto);
+		returnValue = modelMapper.map(createdUser, UserResp.class);
 		
-		BeanUtils.copyProperties(createdUser, returnValue);
 		return returnValue;		
 	}
 	

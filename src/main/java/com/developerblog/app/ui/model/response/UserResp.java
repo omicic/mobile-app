@@ -1,6 +1,6 @@
 package com.developerblog.app.ui.model.response;
 
-
+import java.util.List;
 
 public class UserResp {
 	
@@ -8,7 +8,7 @@ public class UserResp {
 	private String firstName;
 	private String lastName;
 	private String email;
-	//private List<AddressesRest> addresses;
+	private List<AddressesRest> addresses;
 
 	public String getUserId() {
 		return userId;
@@ -42,12 +42,12 @@ public class UserResp {
 		this.email = email;
 	}
 
-/*	public List<AddressesRest> getAddresses() {
+	public List<AddressesRest> getAddresses() {
 		return addresses;
 	}
 
 	public void setAddresses(List<AddressesRest> addresses) {
 		this.addresses = addresses;
-	}*/
+	}
 
 }

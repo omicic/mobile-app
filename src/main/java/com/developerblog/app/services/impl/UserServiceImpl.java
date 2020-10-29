@@ -3,6 +3,7 @@ package com.developerblog.app.services.impl;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -19,6 +20,7 @@ import com.developerblog.app.io.entity.UserEntity;
 import com.developerblog.app.io.repositories.UserRepository;
 import com.developerblog.app.services.UserService;
 import com.developerblog.app.shared.Utils;
+import com.developerblog.app.shared.dto.AddressDTO;
 import com.developerblog.app.shared.dto.UserDto;
 import com.developerblog.app.ui.model.response.ErrorMessages;
 import com.fasterxml.jackson.databind.BeanProperty;
@@ -38,9 +40,17 @@ public class UserServiceImpl implements UserService {
 	public UserDto createUser(UserDto user) {
 		if(userRepository.findByEmail(user.getEmail()) != null) 
 			throw new RuntimeException("Record already exists");
+		
+		for(int i=0;i<user.getAddresses().size();i++)
+		{
+			AddressDTO address = user.getAddresses().get(i);
+			address.setUserDetails(user);
+			address.setAddressId(utils.generateAddressId(30));
+			user.getAddresses().set(i, address);
+		}
 					
-		UserEntity userEntity = new UserEntity();
-		BeanUtils.copyProperties(user, userEntity);
+		ModelMapper modelMapper = new ModelMapper();
+		UserEntity userEntity = modelMapper.map(user, UserEntity.class);
 		
 		String publicUserId = utils.generateUserId(30);
 		userEntity.setUserId(publicUserId);
@@ -48,9 +58,8 @@ public class UserServiceImpl implements UserService {
 		
 		
 		UserEntity storedUserDetails = userRepository.save(userEntity);
+		UserDto returnValue  = modelMapper.map(storedUserDetails, UserDto.class);
 		
-		UserDto returnValue = new UserDto();
-		BeanUtils.copyProperties(storedUserDetails,returnValue);
 		return returnValue;
 	}
 
@@ -120,7 +129,6 @@ public class UserServiceImpl implements UserService {
 		
 		Pageable pageableRequest = PageRequest.of(page, limit);
 		
-	
 		Page<UserEntity> usersPage = userRepository.findAll(pageableRequest);
 		List<UserEntity> users = usersPage.getContent();
 		
