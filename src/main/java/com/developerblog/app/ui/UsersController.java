@@ -1,11 +1,14 @@
 package com.developerblog.app.ui;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,10 +21,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.developerblog.app.exception.UserServiceException;
+import com.developerblog.app.services.AddressService;
 import com.developerblog.app.services.UserService;
+import com.developerblog.app.shared.dto.AddressDTO;
 import com.developerblog.app.shared.dto.UserDto;
 import com.developerblog.app.ui.model.request.RequestOperationName;
 import com.developerblog.app.ui.model.request.UserDetailsRequestModel;
+import com.developerblog.app.ui.model.response.AddressesRest;
 import com.developerblog.app.ui.model.response.ErrorMessages;
 import com.developerblog.app.ui.model.response.OperationStatusModel;
 import com.developerblog.app.ui.model.response.RequestOperationStatus;
@@ -33,6 +39,9 @@ public class UsersController {
 	
 	@Autowired
 	UserService userService;
+	
+	@Autowired
+	AddressService addressesService;
 
 	@GetMapping(path = "/{id}")
 	public UserResp getUser(@PathVariable String id) {
@@ -105,5 +114,43 @@ public class UsersController {
 		
 		return returnValue;
 	}
+	
+	@GetMapping(path = "/{id}/addresses")
+	public List<AddressesRest> getAddresses(@PathVariable String id){
+		
+		List<AddressesRest> returnValue = new ArrayList<AddressesRest>();
+		
+		List<AddressDTO> addressesDTO = addressesService.getAddresses(id);
+		
+		if (addressesDTO != null && !addressesDTO.isEmpty()) {
+			Type listType = new TypeToken<List<AddressesRest>>() {
+			}.getType();
+			returnValue = new ModelMapper().map(addressesDTO, listType);
 
+			/*for (AddressesRest addressRest : returnValue) {
+				Link addressLink = linkTo(methodOn(UserController.class).getUserAddress(id, addressRest.getAddressId()))
+						.withSelfRel();
+				addressRest.add(addressLink);
+
+				Link userLink = linkTo(methodOn(UserController.class).getUser(id)).withRel("user");
+				addressRest.add(userLink);
+			}*/
+		}
+		
+		return returnValue;
+	}
+	
+	
+	@GetMapping(path = "/{userId}/addresses/{addressId}")
+	public AddressesRest getAddress(@PathVariable String addressId){
+	
+		AddressDTO addressesDto = addressesService.getAddress(addressId);
+		
+		ModelMapper modelMapper = new ModelMapper();
+		
+		AddressesRest addressesRestModel = modelMapper.map(addressesDto, AddressesRest.class);
+		
+		return addressesRestModel;
+		
+	}
 }
