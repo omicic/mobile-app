@@ -8,7 +8,9 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,10 +47,14 @@ public class UsersController {
 
 	@GetMapping(path = "/{id}")
 	public UserResp getUser(@PathVariable String id) {
-		UserResp returnValue = new UserResp();
+		//UserResp returnValue = new UserResp();
 		UserDto userDto = userService.getUserByUserId(id);
 		
-		BeanUtils.copyProperties(userDto, returnValue);
+		ModelMapper modelMapper = new ModelMapper();
+		
+		UserResp returnValue = modelMapper.map(userDto, UserResp.class);
+		
+		//BeanUtils.copyProperties(userDto, returnValue);
 		
 		return returnValue;
 	}
@@ -116,7 +122,7 @@ public class UsersController {
 	}
 	
 	@GetMapping(path = "/{id}/addresses")
-	public List<AddressesRest> getAddresses(@PathVariable String id){
+	public CollectionModel<AddressesRest> getAddresses(@PathVariable String id){
 		
 		List<AddressesRest> returnValue = new ArrayList<AddressesRest>();
 		
@@ -127,30 +133,63 @@ public class UsersController {
 			}.getType();
 			returnValue = new ModelMapper().map(addressesDTO, listType);
 
-			/*for (AddressesRest addressRest : returnValue) {
-				Link addressLink = linkTo(methodOn(UserController.class).getUserAddress(id, addressRest.getAddressId()))
+			for (AddressesRest addressRest : returnValue) {
+				Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UsersController.class)
+						.getAddress(id, addressRest.getAddressId()))
 						.withSelfRel();
-				addressRest.add(addressLink);
+				addressRest.add(selfLink);
 
-				Link userLink = linkTo(methodOn(UserController.class).getUser(id)).withRel("user");
-				addressRest.add(userLink);
-			}*/
+				//Link userLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UsersController.class).getUser(id)).withRel("user");
+				//addressRest.add(userLink);
+			}
 		}
 		
-		return returnValue;
+		Link userLink = WebMvcLinkBuilder.linkTo(UsersController.class)
+				.slash(id)
+				.withRel("user");
+		
+		Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UsersController.class)
+				.getAddresses(id))
+				/*.slash(userId)
+				.slash("addresses")
+				.slash(addressId)*/
+				.withSelfRel();
+		
+		return CollectionModel.of(returnValue,userLink,selfLink);
 	}
 	
 	
 	@GetMapping(path = "/{userId}/addresses/{addressId}")
-	public AddressesRest getAddress(@PathVariable String addressId){
+	public AddressesRest getAddress(@PathVariable String userId, @PathVariable String addressId){
 	
 		AddressDTO addressesDto = addressesService.getAddress(addressId);
 		
 		ModelMapper modelMapper = new ModelMapper();
 		
-		AddressesRest addressesRestModel = modelMapper.map(addressesDto, AddressesRest.class);
+		//http://localhost:8080/users/<userId>/addresses/{addressId}
 		
-		return addressesRestModel;
+		Link userLink = WebMvcLinkBuilder.linkTo(UsersController.class).slash(userId).withRel("user");
+		Link userAddresesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UsersController.class)
+				.getAddresses(userId))
+				/*.slash(userId)
+				.slash("addresses")*/
+				.withRel("addresses");
 		
+		Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UsersController.class)
+				.getAddress(userId, addressId))
+				/*.slash(userId)
+				.slash("addresses")
+				.slash(addressId)*/
+				.withSelfRel();
+		
+		
+		AddressesRest returnValue = modelMapper.map(addressesDto, AddressesRest.class);
+		
+		returnValue.add(userLink);
+		returnValue.add(userAddresesLink);
+		returnValue.add(selfLink);
+		return returnValue;
+		//or
+		//return EntityModel.of(returnValue, Arrays.asList(userLink,userAddressesLink,selfLink);
 	}
 }
